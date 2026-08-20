@@ -1,8 +1,6 @@
 import logging
 from src.api.models import ChatRequest
-from src.agents.agent import run_agent
-
-agent_logger = logging.getLogger(__name__)
+from src.agents.pipeline import run_agent
 
 def handle_chat_request(chat_request: ChatRequest):
     response = run_agent(

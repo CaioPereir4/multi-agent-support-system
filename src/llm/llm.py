@@ -1,5 +1,5 @@
 from langchain_aws import ChatBedrockConverse
-from src.llm.config import get_llm_settings
+from src.infra.llm_settings import get_llm_settings
 
 def build_chat_model():
     llm_settings = get_llm_settings()
