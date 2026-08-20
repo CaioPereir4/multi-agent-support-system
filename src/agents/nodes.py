@@ -7,6 +7,17 @@ from src.prompts.templates import ROUTER_PROMPT, KNOWLEDGE_AGENT_PROMPT, SUPPORT
 from src.tools.knowledge_base import web_search
 from src.tools.customer_support import get_merchant_profile, get_recent_transactions, get_settlement_schedule, get_terminal_diagnostics, open_support_ticket
 
+DEFAULT_LANGUAGE = "pt-BR"
+
+
+def _language(state: AgentState) -> str:
+    return state.get("language") or DEFAULT_LANGUAGE
+
+
+def _with_language(prompt: str, language: str) -> str:
+    return f"{prompt}\n# User language\nAnswer entirely in `{language}`.\n"
+
+
 @lru_cache(maxsize=1)
 def build_router():
     model = build_chat_model()
@@ -26,23 +37,24 @@ def router_node(state: AgentState):
     ])
 
     return {
-        "selected_agents": decision.agents
+        "selected_agents": decision.agents,
+        "language": decision.language,
     }
     
 
-@lru_cache(maxsize=1)
-def build_knowledge_agent():
+@lru_cache(maxsize=8)
+def build_knowledge_agent(language: str):
     model = build_chat_model()
     return create_agent(
         model=model,
         tools=[
             web_search,
         ],
-        system_prompt=KNOWLEDGE_AGENT_PROMPT,
+        system_prompt=_with_language(KNOWLEDGE_AGENT_PROMPT, language),
     )    
     
 def knowledge_node(state: AgentState):
-    agent = build_knowledge_agent()
+    agent = build_knowledge_agent(_language(state))
     result = agent.invoke({
         "messages": [
             {
@@ -57,8 +69,8 @@ def knowledge_node(state: AgentState):
             result["messages"][-1].content
     }    
     
-@lru_cache(maxsize=1)
-def build_customer_support_agent():
+@lru_cache(maxsize=8)
+def build_customer_support_agent(language: str):
 
     return create_agent(
         model=build_chat_model(),
@@ -69,14 +81,14 @@ def build_customer_support_agent():
             get_terminal_diagnostics,
             open_support_ticket,
         ],
-        system_prompt=SUPPORT_AGENT_PROMPT,
+        system_prompt=_with_language(SUPPORT_AGENT_PROMPT, language),
         state_schema=AgentState,
     )
 
 
 def customer_support_node(state: AgentState):
 
-    agent = build_customer_support_agent()
+    agent = build_customer_support_agent(_language(state))
 
     prompt = f"""
     User request:
@@ -123,7 +135,7 @@ def synthesizer_node(state: AgentState):
     sections = "\n\n".join(f"{label}:\n{value}" for label, value in findings)
 
     prompt = f"""
-    {SYNTHESIS_PROMPT}
+    {_with_language(SYNTHESIS_PROMPT, _language(state))}
 
     Original request:
     {state["user_message"]}

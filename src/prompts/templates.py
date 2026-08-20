@@ -1,6 +1,6 @@
 """Prompt text. Change the version whenever any prompt below changes."""
 
-PROMPT_VERSION = "2026-08-20.2"
+PROMPT_VERSION = "2026-08-20.3"
 
 # ---------------------------------------------------------------------------
 # Router Agent
@@ -55,6 +55,10 @@ troubleshooting would be worse.
 `customer_support`.
 4. `knowledge` and `customer_support` are the only valid values. There is no \
 `support` and no `escalation`.
+5. `language` is the BCP-47 tag of the language the USER wrote in (`pt-BR` for \
+Portuguese, `en` for English, `es` for Spanish). Judge it from the message \
+itself, never from the subject matter: a question in English about a Brazilian \
+product is still `en`. The whole answer will be written in that language.
 
 Return only the structured decision.
 """

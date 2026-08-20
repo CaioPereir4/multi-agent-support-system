@@ -37,7 +37,7 @@ def _safe(name: str, fn: Callable[[], Any]) -> str:
             }
         )
     except Exception as exc:
-        logger.warning("tool_failed", tool=name, error=str(exc))
+        logger.warning("tool_failed: tool=%s error=%s", name, exc)
         return _dump({"error": "tool_failure", "message": str(exc)})
 
 

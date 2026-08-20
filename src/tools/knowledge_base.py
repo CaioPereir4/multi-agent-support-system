@@ -1,11 +1,20 @@
-from asyncio import log
 import json
 import logging
 from langchain.tools import tool
+from langchain_core.tools import ToolException
 from langchain_tavily import TavilySearch      
 from src.infra.knowledge_base_settings import get_knowledge_base_settings
 
 logger = logging.getLogger(__name__)
+
+def _normalize_results(payload: dict) -> list[dict]:
+    results = payload.get("results") or []
+    if isinstance(results, dict):
+        results = list(results.values())
+    if isinstance(results, (str, bytes)) or not isinstance(results, (list, tuple)):
+        results = []
+    return [r for r in results if isinstance(r, dict)]
+
 
 def _web_search_client():
     settings = get_knowledge_base_settings()
@@ -30,14 +39,34 @@ def web_search(query: str,restrict_to_getnet: bool = False) -> str:
         if restrict_to_getnet:
             client.include_domains = ["getnet.net", "www.getnet.net"]
         raw = client.invoke({"query": query})
+    except ToolException as exc:
+        logger.warning("tavily_no_results: %s", exc)
+        return json.dumps(
+            {"status": "no_relevant_results", "query": query}, ensure_ascii=False
+        )
     except Exception as exc:
-        logger.warning("tavily_failed", error=str(exc))
+        logger.warning("tavily_failed: %s", exc)
         return json.dumps(
             {"status": "web_search_failed", "error": str(exc)[:300]}, ensure_ascii=False
         )
-    
+
     payload = raw if isinstance(raw, dict) else {"results": raw}
-    results = payload.get("results", []) or []
+    if payload.get("error"):
+        logger.warning("tavily_failed: %s", payload["error"])
+        return json.dumps(
+            {"status": "web_search_failed", "error": str(payload["error"])[:300]},
+            ensure_ascii=False,
+        )
+
+    results = _normalize_results(payload)
+    if not results:
+        logger.warning(
+            "tavily_unexpected_payload: type=%s preview=%.300s", type(raw).__name__, raw
+        )
+        return json.dumps(
+            {"status": "no_relevant_results", "query": query}, ensure_ascii=False
+        )
+
     trimmed = [
         {
             "title": r.get("title", ""),

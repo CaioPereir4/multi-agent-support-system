@@ -18,6 +18,8 @@ class AgentState(ChatAgentState[Any]):
 
     user_id: str | None
 
+    language: str | None
+
     selected_agents: list[AgentType]
 
     knowledge_result: str | None
@@ -32,4 +34,13 @@ class RoutingDecision(BaseModel):
             "Specialized agents required to solve "
             "the user's request."
         )
+    )
+
+    language: str = Field(
+        default="pt-BR",
+        description=(
+            "BCP-47 tag of the language the user wrote in "
+            "(pt-BR, en, es, ...). The whole answer is written "
+            "in this language."
+        ),
     )    
