@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from src.llm.llm import build_chat_model
 from langchain.agents import create_agent
 from src.agents.state import AgentState, RoutingDecision
@@ -5,6 +7,7 @@ from src.prompts.templates import ROUTER_PROMPT, KNOWLEDGE_AGENT_PROMPT, SUPPORT
 from src.tools.knowledge_base import web_search
 from src.tools.customer_support import get_merchant_profile, get_recent_transactions, get_settlement_schedule, get_terminal_diagnostics, open_support_ticket
 
+@lru_cache(maxsize=1)
 def build_router():
     model = build_chat_model()
     return model.with_structured_output(RoutingDecision)
@@ -27,6 +30,7 @@ def router_node(state: AgentState):
     }
     
 
+@lru_cache(maxsize=1)
 def build_knowledge_agent():
     model = build_chat_model()
     return create_agent(
@@ -53,6 +57,7 @@ def knowledge_node(state: AgentState):
             result["messages"][-1].content
     }    
     
+@lru_cache(maxsize=1)
 def build_customer_support_agent():
 
     return create_agent(
@@ -68,10 +73,9 @@ def build_customer_support_agent():
     )
 
 
-def customer_support_node(
-    state: AgentState,
-    agent,
-):
+def customer_support_node(state: AgentState):
+
+    agent = build_customer_support_agent()
 
     user_id = state["user_id"]
 
@@ -102,21 +106,36 @@ def route_agents(state: AgentState):
 
 def synthesizer_node(state: AgentState):
 
+    findings = [
+        (label, state.get(key))
+        for label, key in (
+            ("Customer Support Agent", "customer_support_result"),
+            ("Knowledge Agent", "knowledge_result"),
+        )
+        if state.get(key)
+    ]
+
+    if not findings:
+        return {"final_response": "No response generated."}
+
+    # Only one specialist ran: its answer is already the answer.
+    # Re-writing it costs an extra LLM round trip and loses content.
+    if len(findings) == 1:
+        return {"final_response": findings[0][1]}
+
+    sections = "\n\n".join(f"{label}:\n{value}" for label, value in findings)
+
     prompt = f"""
     {SYNTHESIS_PROMPT}
 
     Original request:
     {state["user_message"]}
 
-    Knowledge Agent:
-    {state["knowledge_result"]}
-
-    Customer Support Agent:
-    {state["customer_support_result"]}
+    {sections}
     """
 
     model = build_chat_model()
-    
+
     result = model.invoke(prompt)
 
     return {

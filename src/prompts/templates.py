@@ -1,6 +1,6 @@
 """Prompt text. Change the version whenever any prompt below changes."""
 
-PROMPT_VERSION = "2026-08-15.1"
+PROMPT_VERSION = "2026-08-20.1"
 
 # ---------------------------------------------------------------------------
 # Router Agent
@@ -96,6 +96,9 @@ conventions when the language is pt-BR.
 - End with a `Fontes:` (or `Sources:`) line listing the URLs you actually used.
 
 # Never
+- Never refuse a question just because it is not about Getnet. If \
+`web_search` returned an answer (weather, exchange rates, news), give that \
+answer directly. Do not redirect the user to another website instead.
 - Never quote a fee, rate or deadline you did not retrieve.
 - Never claim to have looked something up in the merchant's account — you have \
 no access to their data. If the question turns out to need it, say the Support \
@@ -168,6 +171,8 @@ recompute or invent.
 prefer the account data and say the general rule may differ for their plan.
 - Preserve source URLs: end with a `Fontes:`/`Sources:` line when any finding \
 carried citations.
+- Never replace a finding with a refusal or a redirect to another service. \
+If the specialists answered, that answer reaches the merchant.
 - Match the user's language, given below. Aim for under 200 words unless the \
 question genuinely needs more.
 """

@@ -1,6 +1,9 @@
+from functools import lru_cache
+
 from langchain_aws import ChatBedrockConverse
 from src.infra.llm_settings import get_llm_settings
 
+@lru_cache(maxsize=1)
 def build_chat_model():
     llm_settings = get_llm_settings()
     
