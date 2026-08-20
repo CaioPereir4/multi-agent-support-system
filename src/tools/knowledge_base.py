@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 def _web_search_client():
     settings = get_knowledge_base_settings()
     return TavilySearch(
-        tavily_api_key=settings.api_key,
         max_results=settings.max_results,
         search_depth=settings.search_depth
     )

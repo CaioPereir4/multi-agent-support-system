@@ -7,8 +7,7 @@ from src.tools.customer_support import get_merchant_profile, get_recent_transact
 
 def build_router():
     model = build_chat_model()
-    model.with_structured_output(RoutingDecision)
-    return model
+    return model.with_structured_output(RoutingDecision)
 
 def router_node(state: AgentState):
     router = build_router()

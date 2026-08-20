@@ -21,6 +21,7 @@ dependencies = [
     "httpx>=0.28.0",                  # usado pelo runner de avaliação (--http)
     # --- Observabilidade ---------------------------------------------------
     "structlog>=25.1.0",
+    "dotenv>=0.9.9",
 ]
 
 [project.optional-dependencies]
