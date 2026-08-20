@@ -13,11 +13,11 @@ from src.agents.state import AgentState
 logger = logging.getLogger("tools.support")
 
 
-def _uid(runtime: ToolRuntime[AgentState]) -> str:
+def _uid(runtime: ToolRuntime[Any, AgentState]) -> str:
     """O lojista autenticado. Nunca vem do modelo."""
-    user_id = getattr(runtime.context, "user_id", None) if runtime.context else None
+    user_id = (runtime.state or {}).get("user_id")
     if not user_id:
-        raise ValueError("No authenticated user in runtime context.")
+        raise ValueError("No authenticated user in agent state.")
     return str(user_id)
 
 

@@ -70,6 +70,7 @@ def build_customer_support_agent():
             open_support_ticket,
         ],
         system_prompt=SUPPORT_AGENT_PROMPT,
+        state_schema=AgentState,
     )
 
 
@@ -77,12 +78,7 @@ def customer_support_node(state: AgentState):
 
     agent = build_customer_support_agent()
 
-    user_id = state["user_id"]
-
     prompt = f"""
-    USER ID:
-    {user_id}
-
     User request:
     {state["user_message"]}
     """
@@ -93,7 +89,8 @@ def customer_support_node(state: AgentState):
                 "role": "user",
                 "content": prompt,
             }
-        ]
+        ],
+        "user_id": state["user_id"],
     })
 
     return {

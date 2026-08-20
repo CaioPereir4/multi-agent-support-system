@@ -1,9 +1,9 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
-from langchain.agents import create_agent
+from langchain.agents import AgentState as ChatAgentState, create_agent
 from langchain_core.language_models import BaseChatModel
 from langgraph.graph import StateGraph, START, END
 
@@ -13,7 +13,7 @@ AgentType = Literal[
 ]
 
 
-class AgentState(TypedDict):
+class AgentState(ChatAgentState[Any]):
     user_message: str
 
     user_id: str | None
