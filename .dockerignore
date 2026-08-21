@@ -1,0 +1,27 @@
+# Never ship secrets or local state in an image layer.
+.env
+.env.*
+!.env.example
+
+.venv/
+.git/
+.gitattributes
+.gitignore
+.idea/
+.vscode/
+
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+tests/
+_to_delete/
+Makefile
+.pre-commit-config.yaml
+Dockerfile
+docker-compose.yml

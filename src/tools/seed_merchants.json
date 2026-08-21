@@ -1,0 +1,97 @@
+{
+  "_comment": "Synthetic merchant data. No real personal data. `days_ago` is relative to the current date so the fixtures never go stale.",
+  "merchants": [
+    {
+      "user_id": "cliente1988",
+      "legal_name": "Padaria Estrela do Sul LTDA",
+      "trade_name": "Padaria Estrela do Sul",
+      "document_masked": "***.456.789-**",
+      "segment": "Alimentacao / Padaria",
+      "city": "Porto Alegre",
+      "state": "RS",
+      "customer_since": "2021-03-14",
+      "contact": { "email": "c***@estreladosul.com.br", "phone_masked": "(51) 9****-1234" },
+      "plan": {
+        "name": "Get Plus",
+        "mdr_pct": { "debit": 1.29, "credit": 2.99, "credit_installments": 3.49, "pix": 0.99 },
+        "monthly_fee_brl": 0.0,
+        "receivables_advance": { "enabled": true, "monthly_rate_pct": 1.79, "mode": "automatic" }
+      },
+      "bank_account": {
+        "bank": "Banco Santander (033)",
+        "branch": "0123",
+        "account_masked": "****-7",
+        "type": "conta corrente",
+        "verified": true
+      },
+      "terminals": [
+        {
+          "serial_number": "GS7X-441902",
+          "model": "Get Smart",
+          "connectivity": ["wifi", "4g_chip"],
+          "status": "online_degraded",
+          "firmware": "4.12.3",
+          "firmware_latest": "4.14.0",
+          "last_seen_minutes_ago": 6,
+          "signal_strength_dbm": -87,
+          "wifi_ssid": "PADARIA_2G",
+          "chip_carrier": "Vivo",
+          "recent_errors": [
+            { "code": "NET-13", "message": "Falha de conexao com o servidor de autorizacao", "count_24h": 7 },
+            { "code": "TX-51", "message": "Transacao negada pelo emissor (saldo insuficiente)", "count_24h": 3 }
+          ]
+        },
+        {
+          "serial_number": "GC3M-118874",
+          "model": "Get Classica",
+          "connectivity": ["4g_chip"],
+          "status": "online",
+          "firmware": "3.9.1",
+          "firmware_latest": "3.9.1",
+          "last_seen_minutes_ago": 1,
+          "signal_strength_dbm": -61,
+          "chip_carrier": "Claro",
+          "recent_errors": []
+        }
+      ],
+      "transactions": [
+        { "transaction_id": "TX-90311", "days_ago": 1, "amount_brl": 148.9, "payment_method": "credit", "installments": 1, "status": "approved", "card_brand": "Visa", "card_last4": "4021" },
+        { "transaction_id": "TX-90312", "days_ago": 1, "amount_brl": 62.0, "payment_method": "debit", "status": "approved", "card_brand": "Elo", "card_last4": "8890" },
+        { "transaction_id": "TX-90313", "days_ago": 1, "amount_brl": 220.5, "payment_method": "pix", "status": "approved" },
+        { "transaction_id": "TX-90314", "days_ago": 1, "amount_brl": 89.9, "payment_method": "credit", "installments": 3, "status": "declined", "decline_reason": "51 - saldo insuficiente", "card_brand": "Mastercard", "card_last4": "1177" },
+        { "transaction_id": "TX-90298", "days_ago": 2, "amount_brl": 310.0, "payment_method": "credit", "installments": 2, "status": "approved", "card_brand": "Mastercard", "card_last4": "5512" },
+        { "transaction_id": "TX-90277", "days_ago": 4, "amount_brl": 45.75, "payment_method": "debit", "status": "approved", "card_brand": "Visa", "card_last4": "3390" },
+        { "transaction_id": "TX-90260", "days_ago": 6, "amount_brl": 512.3, "payment_method": "credit", "installments": 6, "status": "approved", "card_brand": "Visa", "card_last4": "4021" }
+      ]
+    },
+    {
+      "user_id": "cliente2024",
+      "legal_name": "Studio Vera Arquitetura ME",
+      "trade_name": "Studio Vera",
+      "document_masked": "**.345.678/0001-**",
+      "segment": "Servicos / Arquitetura",
+      "city": "Sao Paulo",
+      "state": "SP",
+      "customer_since": "2024-08-02",
+      "contact": { "email": "v***@studiovera.com.br", "phone_masked": "(11) 9****-7788" },
+      "plan": {
+        "name": "Get Basico",
+        "mdr_pct": { "debit": 1.79, "credit": 3.49, "credit_installments": 3.99, "pix": 1.19 },
+        "monthly_fee_brl": 0.0,
+        "receivables_advance": { "enabled": false, "monthly_rate_pct": 2.19, "mode": "on_demand" }
+      },
+      "bank_account": {
+        "bank": "Nubank (260)",
+        "branch": "0001",
+        "account_masked": "****-2",
+        "type": "conta corrente",
+        "verified": true
+      },
+      "terminals": [],
+      "transactions": [
+        { "transaction_id": "TX-77001", "days_ago": 1, "amount_brl": 1800.0, "payment_method": "credit", "installments": 4, "status": "approved", "card_brand": "Visa", "card_last4": "9012" },
+        { "transaction_id": "TX-77002", "days_ago": 3, "amount_brl": 640.0, "payment_method": "pix", "status": "approved" }
+      ]
+    }
+  ]
+}
