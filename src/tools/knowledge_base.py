@@ -38,7 +38,12 @@ def knowledge_base_search(query: str) -> str:
         return json.dumps({"status": "knowledge_base_unavailable"}, ensure_ascii=False)
 
     settings = get_knowledge_base_settings()
-    hits = vector_store.search(query, k=settings.top_k, min_score=settings.min_score)
+    hits = vector_store.search(
+        query,
+        k=settings.top_k,
+        min_score=settings.min_score,
+        max_per_url=settings.max_chunks_per_url,
+    )
     if not hits:
         return json.dumps({"status": "no_relevant_results", "query": query}, ensure_ascii=False)
 
@@ -73,7 +78,7 @@ def web_search(query: str, restrict_to_getnet: bool = False) -> str:
     try:
         client = _build_search_client()
         if restrict_to_getnet:
-            client.include_domains = ["getnet.com.br", "site.getnet.com.br", "getnet.net"]
+            client.include_domains = ["site.getnet.com.br", "getnet.com.br"]
         raw = client.invoke({"query": query})
     except ToolException as exc:
         logger.warning("tavily_no_results: %s", exc)

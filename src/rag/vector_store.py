@@ -9,7 +9,7 @@ from typing import Any
 from langchain_aws import BedrockEmbeddings
 from langchain_core.documents import Document
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_tavily import TavilyCrawl
+from langchain_tavily import TavilyCrawl, TavilyExtract
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.infra.knowledge_base_settings import get_knowledge_base_settings
@@ -41,21 +41,38 @@ def is_ready() -> bool:
     return _index is not None
 
 
-def search(query: str, k: int, min_score: float) -> list[tuple[Document, float]]:
-    """Nearest chunks above `min_score`. Cosine similarity, so scores run from -1 to 1.
+def search(
+    query: str, k: int, min_score: float, max_per_url: int = 2
+) -> list[tuple[Document, float]]:
+    """Nearest chunks above `min_score`, at most `max_per_url` from the same page.
 
-    Without the floor the store always returns its k nearest chunks, however irrelevant
-    they are, and the agent keeps reformulating instead of falling back to web search.
+    Cosine similarity, so scores run from -1 to 1. Without the floor the store always
+    returns its k nearest chunks, however irrelevant, and the agent keeps reformulating
+    instead of falling back to web search. Without the per-page cap a single page (the
+    pricing one) takes every slot and the answer misses what the other pages say.
     """
     index = _index
     if index is None:
         return []
 
-    hits = index.similarity_search_with_score(query, k=k)
+    hits = index.similarity_search_with_score(query, k=k * 2)
     for doc, score in hits:
         logger.info("kb_hit score=%.3f url=%s", score, doc.metadata.get("url", ""))
 
-    return [(doc, score) for doc, score in hits if score >= min_score]
+    selected: list[tuple[Document, float]] = []
+    per_url: dict[str, int] = {}
+    for doc, score in hits:
+        if score < min_score:
+            continue
+        url = doc.metadata.get("url", "")
+        if per_url.get(url, 0) >= max_per_url:
+            continue
+        per_url[url] = per_url.get(url, 0) + 1
+        selected.append((doc, score))
+        if len(selected) == k:
+            break
+
+    return selected
 
 
 def refresh() -> int:
@@ -131,7 +148,49 @@ def _crawl_pages() -> list[Document]:
     pages: list[Document] = []
     for url in settings.crawl_urls:
         pages.extend(_crawl_site(url, settings))
-    return pages
+    pages.extend(_extract_pages(settings))
+    return _deduplicate(pages)
+
+
+def _deduplicate(pages: list[Document]) -> list[Document]:
+    """The crawler and the fixed list overlap; indexing a page twice skews retrieval."""
+    seen: set[str] = set()
+    unique: list[Document] = []
+    for page in pages:
+        url = page.metadata.get("url", "").rstrip("/")
+        if url in seen:
+            continue
+        seen.add(url)
+        unique.append(page)
+    return unique
+
+
+def _extract_pages(settings: Any) -> list[Document]:
+    urls = list(settings.extract_urls)
+    if not urls:
+        return []
+
+    try:
+        extractor = TavilyExtract(extract_depth="basic")
+        raw = extractor.invoke({"urls": urls})
+    except Exception as exc:
+        logger.warning("tavily_extract_failed: %s", exc)
+        _status["last_error"] = f"extract: {str(exc)[:200]}"
+        return []
+
+    results = raw.get("results") if isinstance(raw, dict) else None
+    if not isinstance(results, list):
+        logger.warning("tavily_extract_unexpected_payload: type=%s", type(raw).__name__)
+        _status["last_error"] = f"extract: unexpected payload {type(raw).__name__}"
+        return []
+
+    documents = [
+        Document(page_content=page["raw_content"], metadata={"url": page.get("url", "")})
+        for page in results
+        if isinstance(page, dict) and page.get("raw_content")
+    ]
+    logger.info("extracted %s of %s listed pages", len(documents), len(urls))
+    return documents
 
 
 def _crawl_site(url: str, settings: Any) -> list[Document]:

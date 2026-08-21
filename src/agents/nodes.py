@@ -68,7 +68,15 @@ def build_knowledge_agent(language: str):
             web_search,
         ],
         system_prompt=_with_language_instruction(KNOWLEDGE_AGENT_PROMPT, language),
-        middleware=[ToolCallLimitMiddleware(run_limit=3, exit_behavior="continue")],
+        middleware=[
+            # 4, not 2: blocked retries also count, and a tight global cap would
+            # swallow the web_search fallback when the model insists on the KB.
+            ToolCallLimitMiddleware(run_limit=4, exit_behavior="continue"),
+            # The prompt asks for a single knowledge base lookup; this enforces it.
+            ToolCallLimitMiddleware(
+                tool_name="knowledge_base_search", run_limit=1, exit_behavior="continue"
+            ),
+        ],
     )
 
 
