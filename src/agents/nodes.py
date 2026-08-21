@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from langchain.agents import create_agent
+from langchain.agents.middleware import ToolCallLimitMiddleware
 
 from src.agents.state import AgentState, RoutingDecision
 from src.llm.llm import build_chat_model
@@ -67,6 +68,7 @@ def build_knowledge_agent(language: str):
             web_search,
         ],
         system_prompt=_with_language_instruction(KNOWLEDGE_AGENT_PROMPT, language),
+        middleware=[ToolCallLimitMiddleware(run_limit=3, exit_behavior="continue")],
     )
 
 
@@ -100,6 +102,7 @@ def build_customer_support_agent(language: str):
         ],
         system_prompt=_with_language_instruction(SUPPORT_AGENT_PROMPT, language),
         state_schema=AgentState,
+        middleware=[ToolCallLimitMiddleware(run_limit=5, exit_behavior="continue")],
     )
 
 
