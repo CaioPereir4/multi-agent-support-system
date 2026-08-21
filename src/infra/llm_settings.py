@@ -1,8 +1,10 @@
+import os
 from functools import lru_cache
 
 
 class LLMSettings:
-    aws_region: str = "us-east-1"
+    # Overridable so the same image runs in any region (compose sets AWS_REGION).
+    aws_region: str = os.getenv("AWS_REGION", "us-east-1")
     bedrock_model_id: str = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
     bedrock_embedding_model_id: str = "amazon.titan-embed-text-v2:0"
     bedrock_embedding_dimensions: int = 256

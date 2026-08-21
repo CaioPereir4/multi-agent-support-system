@@ -1,0 +1,23 @@
+name: getnet-support-system
+
+services:
+  api:
+    build: .
+    image: getnet-support-system:latest
+    container_name: getnet-support-api
+    ports:
+      - "8000:8000"
+    # Application secrets (TAVILY_API_KEY, LANGSMITH_*) stay on the host and are
+    # injected at run time; they are never baked into the image.
+    env_file:
+      - .env
+    environment:
+      # The container holds no AWS credentials of its own: boto3 reads the
+      # read-only profile mounted below. In production this block disappears and
+      # the ECS task role / IRSA supplies temporary credentials instead.
+      AWS_PROFILE: ${AWS_PROFILE:-default}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+    volumes:
+      # On Windows, replace with ${USERPROFILE}/.aws if ~ is not expanded.
+      - ~/.aws:/home/app/.aws:ro
+    restart: unless-stopped

@@ -1,4 +1,4 @@
-.PHONY: install lint fmt test run hooks
+.PHONY: install lint fmt test run hooks docker-build docker-up docker-down docker-logs
 
 install:
 	uv sync --extra dev
@@ -19,3 +19,15 @@ test:
 
 run:
 	uv run uvicorn main:app --reload
+
+docker-build:
+	docker compose build
+
+docker-up:
+	docker compose up --build -d
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose logs -f api
