@@ -11,6 +11,7 @@ dependencies = [
     "langgraph>=1.2.0",
     "langchain-aws>=1.7.0",
     "langchain-tavily>=0.2.0",
+    "langchain-text-splitters>=1.0.0",
     "fastapi>=0.141.0",
     "uvicorn[standard]>=0.52.0",
     "pydantic>=2.13.0",

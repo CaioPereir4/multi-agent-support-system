@@ -6,6 +6,7 @@ from langchain_tavily import TavilySearch
 
 from src.infra.knowledge_base_settings import get_knowledge_base_settings
 from src.infra.logger import get_logger
+from src.rag import vector_store
 
 logger = get_logger(__name__)
 
@@ -22,6 +23,38 @@ def _parse_search_results(payload: dict) -> list[dict]:
 def _build_search_client():
     settings = get_knowledge_base_settings()
     return TavilySearch(max_results=settings.max_results, search_depth=settings.search_depth)
+
+
+@tool(parse_docstring=True)
+def knowledge_base_search(query: str) -> str:
+    """Search the getnet.net pages ingested into the knowledge base. Use this first for
+    anything about Getnet itself: card machines, fees, Pix, payment links, receivables
+    advance (antecipacao) or crediario.
+
+    Args:
+        query: The search query, in the user's language.
+    """
+    if not vector_store.is_ready():
+        return json.dumps({"status": "knowledge_base_unavailable"}, ensure_ascii=False)
+
+    hits = vector_store.search(query, k=get_knowledge_base_settings().top_k)
+    if not hits:
+        return json.dumps({"status": "no_relevant_results", "query": query}, ensure_ascii=False)
+
+    return json.dumps(
+        {
+            "status": "ok",
+            "count": len(hits),
+            "results": [
+                {
+                    "url": doc.metadata.get("url", ""),
+                    "content": doc.page_content[:1200],
+                }
+                for doc in hits
+            ],
+        },
+        ensure_ascii=False,
+    )
 
 
 @tool(parse_docstring=True)

@@ -17,7 +17,7 @@ from src.tools.customer_support import (
     get_terminal_diagnostics,
     open_support_ticket,
 )
-from src.tools.knowledge_base import web_search
+from src.tools.knowledge_base import knowledge_base_search, web_search
 
 DEFAULT_LANGUAGE = "pt-BR"
 
@@ -63,6 +63,7 @@ def build_knowledge_agent(language: str):
     return create_agent(
         model=model,
         tools=[
+            knowledge_base_search,
             web_search,
         ],
         system_prompt=_with_language_instruction(KNOWLEDGE_AGENT_PROMPT, language),
