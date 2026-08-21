@@ -1,16 +1,16 @@
 import json
-import logging
 
 from langchain.tools import tool
 from langchain_core.tools import ToolException
 from langchain_tavily import TavilySearch
 
 from src.infra.knowledge_base_settings import get_knowledge_base_settings
+from src.infra.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
-def _normalize_results(payload: dict) -> list[dict]:
+def _parse_search_results(payload: dict) -> list[dict]:
     results = payload.get("results") or []
     if isinstance(results, dict):
         results = list(results.values())
@@ -19,7 +19,7 @@ def _normalize_results(payload: dict) -> list[dict]:
     return [r for r in results if isinstance(r, dict)]
 
 
-def _web_search_client():
+def _build_search_client():
     settings = get_knowledge_base_settings()
     return TavilySearch(max_results=settings.max_results, search_depth=settings.search_depth)
 
@@ -36,7 +36,7 @@ def web_search(query: str, restrict_to_getnet: bool = False) -> str:
             the knowledge base returned nothing but the topic is still Getnet's.
     """
     try:
-        client = _web_search_client()
+        client = _build_search_client()
         if restrict_to_getnet:
             client.include_domains = ["getnet.net", "www.getnet.net"]
         raw = client.invoke({"query": query})
@@ -57,7 +57,7 @@ def web_search(query: str, restrict_to_getnet: bool = False) -> str:
             ensure_ascii=False,
         )
 
-    results = _normalize_results(payload)
+    results = _parse_search_results(payload)
     if not results:
         logger.warning("tavily_unexpected_payload: type=%s preview=%.300s", type(raw).__name__, raw)
         return json.dumps({"status": "no_relevant_results", "query": query}, ensure_ascii=False)

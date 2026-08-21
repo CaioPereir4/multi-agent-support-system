@@ -22,11 +22,11 @@ from src.tools.knowledge_base import web_search
 DEFAULT_LANGUAGE = "pt-BR"
 
 
-def _language(state: AgentState) -> str:
+def _resolve_language(state: AgentState) -> str:
     return state.get("language") or DEFAULT_LANGUAGE
 
 
-def _with_language(prompt: str, language: str) -> str:
+def _with_language_instruction(prompt: str, language: str) -> str:
     return f"{prompt}\n# User language\nAnswer entirely in `{language}`.\n"
 
 
@@ -65,12 +65,12 @@ def build_knowledge_agent(language: str):
         tools=[
             web_search,
         ],
-        system_prompt=_with_language(KNOWLEDGE_AGENT_PROMPT, language),
+        system_prompt=_with_language_instruction(KNOWLEDGE_AGENT_PROMPT, language),
     )
 
 
 def knowledge_node(state: AgentState):
-    agent = build_knowledge_agent(_language(state))
+    agent = build_knowledge_agent(_resolve_language(state))
     result = agent.invoke(
         {
             "messages": [
@@ -97,14 +97,14 @@ def build_customer_support_agent(language: str):
             get_terminal_diagnostics,
             open_support_ticket,
         ],
-        system_prompt=_with_language(SUPPORT_AGENT_PROMPT, language),
+        system_prompt=_with_language_instruction(SUPPORT_AGENT_PROMPT, language),
         state_schema=AgentState,
     )
 
 
 def customer_support_node(state: AgentState):
 
-    agent = build_customer_support_agent(_language(state))
+    agent = build_customer_support_agent(_resolve_language(state))
 
     prompt = f"""
     User request:
@@ -152,7 +152,7 @@ def synthesizer_node(state: AgentState):
     sections = "\n\n".join(f"{label}:\n{value}" for label, value in findings)
 
     prompt = f"""
-    {_with_language(SYNTHESIS_PROMPT, _language(state))}
+    {_with_language_instruction(SYNTHESIS_PROMPT, _resolve_language(state))}
 
     Original request:
     {state["user_message"]}

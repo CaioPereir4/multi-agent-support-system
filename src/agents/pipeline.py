@@ -1,16 +1,21 @@
+from functools import lru_cache
+
 from src.agents.graph import build_graph
 from src.infra.logger import get_logger
 
 logger = get_logger(__name__)
 
 
+@lru_cache(maxsize=1)
+def _compiled_graph():
+    return build_graph()
+
+
 def run_agent(user_question: str, user_id: str) -> str:
+    logger.info("Agent user question: %s", user_question)
+    logger.info("Agent user ID: %s", user_id)
 
-    logger.info(f"Agent user question: {user_question}")
-    logger.info(f"Agent user ID: {user_id}")
-
-    graph = build_graph()
-    result = graph.invoke(
+    result = _compiled_graph().invoke(
         {
             "user_message": user_question,
             "user_id": user_id,

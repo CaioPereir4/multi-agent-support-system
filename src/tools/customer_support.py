@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 from collections.abc import Callable
 from typing import Any
 
@@ -9,12 +8,13 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import ToolRuntime
 
 from src.agents.state import AgentState
+from src.infra.logger import get_logger
 from src.tools.crm import MerchantNotFoundError, get_repository
 
-logger = logging.getLogger("tools.support")
+logger = get_logger(__name__)
 
 
-def _uid(runtime: ToolRuntime[Any, AgentState]) -> str:
+def _authenticated_user_id(runtime: ToolRuntime[Any, AgentState]) -> str:
     """The authenticated merchant. Never supplied by the model."""
     user_id = (runtime.state or {}).get("user_id")
     if not user_id:
@@ -22,16 +22,16 @@ def _uid(runtime: ToolRuntime[Any, AgentState]) -> str:
     return str(user_id)
 
 
-def _dump(payload: Any) -> str:
+def _to_json(payload: Any) -> str:
     return json.dumps(payload, ensure_ascii=False, indent=2, default=str)
 
 
-def _safe(name: str, fn: Callable[[], Any]) -> str:
+def _run_tool(name: str, fn: Callable[[], Any]) -> str:
     """Run `fn`, serialize the result as JSON and turn any failure into a JSON error."""
     try:
-        return _dump(fn())
+        return _to_json(fn())
     except MerchantNotFoundError:
-        return _dump(
+        return _to_json(
             {
                 "error": "merchant_not_found",
                 "message": "No merchant record exists for the authenticated user.",
@@ -39,7 +39,7 @@ def _safe(name: str, fn: Callable[[], Any]) -> str:
         )
     except Exception as exc:
         logger.warning("tool_failed: tool=%s error=%s", name, exc)
-        return _dump({"error": "tool_failure", "message": str(exc)})
+        return _to_json({"error": "tool_failure", "message": str(exc)})
 
 
 @tool(parse_docstring=True)
@@ -52,7 +52,7 @@ def get_merchant_profile(runtime: ToolRuntime[AgentState]) -> str:
     """
 
     def fetch() -> dict[str, Any]:
-        m = get_repository().get_merchant(_uid(runtime))
+        m = get_repository().get_merchant(_authenticated_user_id(runtime))
         return {
             "user_id": m["user_id"],
             "trade_name": m["trade_name"],
@@ -69,7 +69,7 @@ def get_merchant_profile(runtime: ToolRuntime[AgentState]) -> str:
             ],
         }
 
-    return _safe("get_merchant_profile", fetch)
+    return _run_tool("get_merchant_profile", fetch)
 
 
 @tool(parse_docstring=True)
@@ -82,7 +82,7 @@ def get_recent_transactions(runtime: ToolRuntime[AgentState], days: int = 7) -> 
     days = max(1, min(int(days), 90))
 
     def fetch() -> dict[str, Any]:
-        txs = get_repository().transactions(_uid(runtime), days=days)
+        txs = get_repository().transactions(_authenticated_user_id(runtime), days=days)
         approved = [t for t in txs if t["status"] == "approved"]
         return {
             "window_days": days,
@@ -92,7 +92,7 @@ def get_recent_transactions(runtime: ToolRuntime[AgentState], days: int = 7) -> 
             "transactions": txs,
         }
 
-    return _safe("get_recent_transactions", fetch)
+    return _run_tool("get_recent_transactions", fetch)
 
 
 @tool(parse_docstring=True)
@@ -109,9 +109,9 @@ def get_settlement_schedule(runtime: ToolRuntime[AgentState], days_back: int = 3
     """
     days_back = max(1, min(int(days_back), 30))
 
-    return _safe(
+    return _run_tool(
         "get_settlement_schedule",
-        lambda: get_repository().settlements(_uid(runtime), days_back=days_back),
+        lambda: get_repository().settlements(_authenticated_user_id(runtime), days_back=days_back),
     )
 
 
@@ -129,9 +129,11 @@ def get_terminal_diagnostics(
     Args:
         serial_number: Restrict to one terminal. Omit to get all of them.
     """
-    return _safe(
+    return _run_tool(
         "get_terminal_diagnostics",
-        lambda: get_repository().terminal_diagnostics(_uid(runtime), serial_number=serial_number),
+        lambda: get_repository().terminal_diagnostics(
+            _authenticated_user_id(runtime), serial_number=serial_number
+        ),
     )
 
 
@@ -157,10 +159,10 @@ def open_support_ticket(
     if priority not in {"low", "normal", "high", "urgent"}:
         priority = "normal"
 
-    return _safe(
+    return _run_tool(
         "open_support_ticket",
         lambda: get_repository().create_ticket(
-            _uid(runtime), category=category, summary=summary, priority=priority
+            _authenticated_user_id(runtime), category=category, summary=summary, priority=priority
         ),
     )
 

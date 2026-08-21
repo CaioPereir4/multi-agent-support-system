@@ -15,7 +15,7 @@ class MerchantNotFoundError(KeyError):
 
 
 @lru_cache(maxsize=1)
-def _seed() -> dict[str, Any]:
+def _load_seed_data() -> dict[str, Any]:
     return json.loads(_SEED_FILE.read_text(encoding="utf-8"))
 
 
@@ -27,7 +27,7 @@ class MerchantRepository:
     """Read/write access to merchant data. Instantiated per process."""
 
     def __init__(self, seed: dict[str, Any] | None = None) -> None:
-        data = seed if seed is not None else _seed()
+        data = seed if seed is not None else _load_seed_data()
         self._merchants: dict[str, dict[str, Any]] = {
             m["user_id"]: m for m in data.get("merchants", [])
         }

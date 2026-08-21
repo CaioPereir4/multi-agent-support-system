@@ -1,10 +1,12 @@
-import os
+from functools import lru_cache
 from typing import Literal
 
+
 class KnowledgeBaseSettings:
-    api_key: str = os.getenv("KNOWLEDGE_BASE_API_KEY")
     max_results: int = 5
     search_depth: Literal["basic", "advanced"] = "basic"
 
-def get_knowledge_base_settings():
+
+@lru_cache(maxsize=1)
+def get_knowledge_base_settings() -> KnowledgeBaseSettings:
     return KnowledgeBaseSettings()

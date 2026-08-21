@@ -1,3 +1,6 @@
+from functools import lru_cache
+
+
 class LLMSettings:
     aws_region: str = "us-east-1"
     bedrock_model_id: str = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
@@ -6,5 +9,6 @@ class LLMSettings:
     bedrock_temperature: float = 0.5
 
 
+@lru_cache(maxsize=1)
 def get_llm_settings() -> LLMSettings:
     return LLMSettings()
