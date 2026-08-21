@@ -15,7 +15,7 @@ logger = logging.getLogger("tools.support")
 
 
 def _uid(runtime: ToolRuntime[Any, AgentState]) -> str:
-    """O lojista autenticado. Nunca vem do modelo."""
+    """The authenticated merchant. Never supplied by the model."""
     user_id = (runtime.state or {}).get("user_id")
     if not user_id:
         raise ValueError("No authenticated user in agent state.")
@@ -27,7 +27,7 @@ def _dump(payload: Any) -> str:
 
 
 def _safe(name: str, fn: Callable[[], Any]) -> str:
-    """Executa `fn`, serializa em JSON e converte qualquer falha em JSON de erro."""
+    """Run `fn`, serialize the result as JSON and turn any failure into a JSON error."""
     try:
         return _dump(fn())
     except MerchantNotFoundError:
@@ -72,11 +72,6 @@ def get_merchant_profile(runtime: ToolRuntime[AgentState]) -> str:
     return _safe("get_merchant_profile", fetch)
 
 
-# ---------------------------------------------------------------------------
-# Tool 2 — vendas recentes
-# ---------------------------------------------------------------------------
-
-
 @tool(parse_docstring=True)
 def get_recent_transactions(runtime: ToolRuntime[AgentState], days: int = 7) -> str:
     """List the authenticated merchant's recent sales, approved and declined.
@@ -100,11 +95,6 @@ def get_recent_transactions(runtime: ToolRuntime[AgentState], days: int = 7) -> 
     return _safe("get_recent_transactions", fetch)
 
 
-# ---------------------------------------------------------------------------
-# Tool 3 — quando o dinheiro cai
-# ---------------------------------------------------------------------------
-
-
 @tool(parse_docstring=True)
 def get_settlement_schedule(runtime: ToolRuntime[AgentState], days_back: int = 3) -> str:
     """Explain when the money from recent sales will be credited, per transaction.
@@ -125,11 +115,6 @@ def get_settlement_schedule(runtime: ToolRuntime[AgentState], days_back: int = 3
     )
 
 
-# ---------------------------------------------------------------------------
-# Tool 4 — diagnóstico da maquininha
-# ---------------------------------------------------------------------------
-
-
 @tool(parse_docstring=True)
 def get_terminal_diagnostics(
     runtime: ToolRuntime[AgentState], serial_number: str | None = None
@@ -148,11 +133,6 @@ def get_terminal_diagnostics(
         "get_terminal_diagnostics",
         lambda: get_repository().terminal_diagnostics(_uid(runtime), serial_number=serial_number),
     )
-
-
-# ---------------------------------------------------------------------------
-# Tool 5 — abrir chamado (escrita)
-# ---------------------------------------------------------------------------
 
 
 @tool(parse_docstring=True)

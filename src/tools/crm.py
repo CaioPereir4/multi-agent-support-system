@@ -23,11 +23,6 @@ def _today() -> date:
     return datetime.now(UTC).date()
 
 
-# ---------------------------------------------------------------------------
-# Repository
-# ---------------------------------------------------------------------------
-
-
 class MerchantRepository:
     """Read/write access to merchant data. Instantiated per process."""
 
@@ -39,7 +34,6 @@ class MerchantRepository:
         self._tickets: dict[str, dict[str, Any]] = {}
         self._ticket_seq = 1000
 
-    # -- profile ---------------------------------------------------------
     def get_merchant(self, user_id: str) -> dict[str, Any]:
         try:
             return self._merchants[user_id]
@@ -49,7 +43,6 @@ class MerchantRepository:
     def exists(self, user_id: str) -> bool:
         return user_id in self._merchants
 
-    # -- transactions ----------------------------------------------------
     def transactions(self, user_id: str, days: int = 7) -> list[dict[str, Any]]:
         merchant = self.get_merchant(user_id)
         cutoff = _today() - timedelta(days=days)
@@ -73,7 +66,6 @@ class MerchantRepository:
             )
         return sorted(out, key=lambda t: t["date"], reverse=True)
 
-    # -- settlement ------------------------------------------------------
     def settlements(self, user_id: str, days_back: int = 3) -> dict[str, Any]:
         """Compute when each recent sale lands in the merchant's account.
 
@@ -128,7 +120,6 @@ class MerchantRepository:
             "total_net_brl": round(sum(e["net_brl"] for e in entries), 2),
         }
 
-    # -- device telemetry ------------------------------------------------
     def terminals(self, user_id: str) -> list[dict[str, Any]]:
         return list(self.get_merchant(user_id).get("terminals", []))
 
@@ -144,7 +135,6 @@ class MerchantRepository:
                 return {"terminals": [], "note": f"No terminal with serial {serial_number}."}
         return {"terminals": terminals}
 
-    # -- tickets ---------------------------------------------------------
     def create_ticket(
         self,
         user_id: str,
@@ -179,7 +169,6 @@ class MerchantRepository:
     def list_tickets(self, user_id: str) -> list[dict[str, Any]]:
         return [t for t in self._tickets.values() if t["user_id"] == user_id]
 
-    # -- operator availability -------------------------------------------
     def operator_queue(self, queue: str = "tier1-support") -> dict[str, Any]:
         """Simulated human-operator queue depth (deterministic per queue+hour)."""
         rng = random.Random(f"{queue}-{datetime.now(UTC):%Y%m%d%H}")

@@ -9,7 +9,6 @@ def run_agent(user_question: str, user_id: str) -> str:
     logger.info(f"Agent user question: {user_question}")
     logger.info(f"Agent user ID: {user_id}")
 
-    # Build the state graph
     graph = build_graph()
     result = graph.invoke(
         {
