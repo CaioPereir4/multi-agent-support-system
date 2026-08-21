@@ -32,6 +32,7 @@ dev = [
     "respx>=0.22.0",
     "ruff>=0.9.0",
     "mypy>=1.14.0",
+    "pre-commit>=4.0.0",
 ]
 
 [project.scripts]
@@ -61,14 +62,20 @@ markers = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["src", "tests", "evals"]
+src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
 ignore = ["B008", "RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["support_system", "evals", "tests"]
+known-first-party = ["src"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+docstring-code-format = true
 
 [tool.mypy]
 python_version = "3.12"

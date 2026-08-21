@@ -1,0 +1,7 @@
+# Keep line endings stable across Windows/Linux/CI checkouts.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+uv.lock -diff

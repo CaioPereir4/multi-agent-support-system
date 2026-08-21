@@ -1,14 +1,15 @@
 from __future__ import annotations
-import logging
+
 import json
+import logging
 from collections.abc import Callable
 from typing import Any
 
 from langchain_core.tools import tool
 from langgraph.prebuilt import ToolRuntime
 
-from src.tools.crm import MerchantNotFoundError, get_repository
 from src.agents.state import AgentState
+from src.tools.crm import MerchantNotFoundError, get_repository
 
 logger = logging.getLogger("tools.support")
 

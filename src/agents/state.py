@@ -1,11 +1,7 @@
 from typing import Any, Literal
 
+from langchain.agents import AgentState as ChatAgentState
 from pydantic import BaseModel, Field
-from typing_extensions import TypedDict
-
-from langchain.agents import AgentState as ChatAgentState, create_agent
-from langchain_core.language_models import BaseChatModel
-from langgraph.graph import StateGraph, START, END
 
 AgentType = Literal[
     "knowledge",
@@ -27,13 +23,11 @@ class AgentState(ChatAgentState[Any]):
     customer_support_result: str | None
 
     final_response: str | None
-    
+
+
 class RoutingDecision(BaseModel):
     agents: list[AgentType] = Field(
-        description=(
-            "Specialized agents required to solve "
-            "the user's request."
-        )
+        description=("Specialized agents required to solve the user's request.")
     )
 
     language: str = Field(
@@ -43,4 +37,4 @@ class RoutingDecision(BaseModel):
             "(pt-BR, en, es, ...). The whole answer is written "
             "in this language."
         ),
-    )    
+    )

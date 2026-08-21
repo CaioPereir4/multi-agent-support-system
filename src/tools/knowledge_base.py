@@ -1,11 +1,14 @@
 import json
 import logging
+
 from langchain.tools import tool
 from langchain_core.tools import ToolException
-from langchain_tavily import TavilySearch      
+from langchain_tavily import TavilySearch
+
 from src.infra.knowledge_base_settings import get_knowledge_base_settings
 
 logger = logging.getLogger(__name__)
+
 
 def _normalize_results(payload: dict) -> list[dict]:
     results = payload.get("results") or []
@@ -18,13 +21,11 @@ def _normalize_results(payload: dict) -> list[dict]:
 
 def _web_search_client():
     settings = get_knowledge_base_settings()
-    return TavilySearch(
-        max_results=settings.max_results,
-        search_depth=settings.search_depth
-    )
+    return TavilySearch(max_results=settings.max_results, search_depth=settings.search_depth)
+
 
 @tool(parse_docstring=True)
-def web_search(query: str,restrict_to_getnet: bool = False) -> str:
+def web_search(query: str, restrict_to_getnet: bool = False) -> str:
     """Search the live web with Tavily for information the knowledge base does not
     contain: current events, weather, exchange rates, third-party comparisons, or
     Getnet pages that were not ingested.
@@ -33,7 +34,7 @@ def web_search(query: str,restrict_to_getnet: bool = False) -> str:
         query: The search query, in the user's language.
         restrict_to_getnet: Set True to limit results to getnet.net — useful when
             the knowledge base returned nothing but the topic is still Getnet's.
-    """ 
+    """
     try:
         client = _web_search_client()
         if restrict_to_getnet:
@@ -41,9 +42,7 @@ def web_search(query: str,restrict_to_getnet: bool = False) -> str:
         raw = client.invoke({"query": query})
     except ToolException as exc:
         logger.warning("tavily_no_results: %s", exc)
-        return json.dumps(
-            {"status": "no_relevant_results", "query": query}, ensure_ascii=False
-        )
+        return json.dumps({"status": "no_relevant_results", "query": query}, ensure_ascii=False)
     except Exception as exc:
         logger.warning("tavily_failed: %s", exc)
         return json.dumps(
@@ -60,12 +59,8 @@ def web_search(query: str,restrict_to_getnet: bool = False) -> str:
 
     results = _normalize_results(payload)
     if not results:
-        logger.warning(
-            "tavily_unexpected_payload: type=%s preview=%.300s", type(raw).__name__, raw
-        )
-        return json.dumps(
-            {"status": "no_relevant_results", "query": query}, ensure_ascii=False
-        )
+        logger.warning("tavily_unexpected_payload: type=%s preview=%.300s", type(raw).__name__, raw)
+        return json.dumps({"status": "no_relevant_results", "query": query}, ensure_ascii=False)
 
     trimmed = [
         {
@@ -75,8 +70,8 @@ def web_search(query: str,restrict_to_getnet: bool = False) -> str:
             "content": (r.get("content") or "")[:1200],
         }
         for r in results
-    ]  
-    
+    ]
+
     return json.dumps(
         {
             "status": "ok",
@@ -85,4 +80,4 @@ def web_search(query: str,restrict_to_getnet: bool = False) -> str:
             "results": trimmed,
         },
         ensure_ascii=False,
-    )  
+    )

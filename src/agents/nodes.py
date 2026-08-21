@@ -1,11 +1,23 @@
 from functools import lru_cache
 
-from src.llm.llm import build_chat_model
 from langchain.agents import create_agent
+
 from src.agents.state import AgentState, RoutingDecision
-from src.prompts.templates import ROUTER_PROMPT, KNOWLEDGE_AGENT_PROMPT, SUPPORT_AGENT_PROMPT, SYNTHESIS_PROMPT
+from src.llm.llm import build_chat_model
+from src.prompts.templates import (
+    KNOWLEDGE_AGENT_PROMPT,
+    ROUTER_PROMPT,
+    SUPPORT_AGENT_PROMPT,
+    SYNTHESIS_PROMPT,
+)
+from src.tools.customer_support import (
+    get_merchant_profile,
+    get_recent_transactions,
+    get_settlement_schedule,
+    get_terminal_diagnostics,
+    open_support_ticket,
+)
 from src.tools.knowledge_base import web_search
-from src.tools.customer_support import get_merchant_profile, get_recent_transactions, get_settlement_schedule, get_terminal_diagnostics, open_support_ticket
 
 DEFAULT_LANGUAGE = "pt-BR"
 
@@ -23,24 +35,27 @@ def build_router():
     model = build_chat_model()
     return model.with_structured_output(RoutingDecision)
 
+
 def router_node(state: AgentState):
     router = build_router()
-    decision = router.invoke([
-        {
-            "role": "system",
-            "content": ROUTER_PROMPT,
-        },
-        {
-            "role": "user",
-            "content": state["user_message"],
-        },
-    ])
+    decision = router.invoke(
+        [
+            {
+                "role": "system",
+                "content": ROUTER_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": state["user_message"],
+            },
+        ]
+    )
 
     return {
         "selected_agents": decision.agents,
         "language": decision.language,
     }
-    
+
 
 @lru_cache(maxsize=8)
 def build_knowledge_agent(language: str):
@@ -51,24 +66,25 @@ def build_knowledge_agent(language: str):
             web_search,
         ],
         system_prompt=_with_language(KNOWLEDGE_AGENT_PROMPT, language),
-    )    
-    
+    )
+
+
 def knowledge_node(state: AgentState):
     agent = build_knowledge_agent(_language(state))
-    result = agent.invoke({
-        "messages": [
-            {
-                "role": "user",
-                "content": state["user_message"],
-            }
-        ]
-    })
+    result = agent.invoke(
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": state["user_message"],
+                }
+            ]
+        }
+    )
 
-    return {
-        "knowledge_result":
-            result["messages"][-1].content
-    }    
-    
+    return {"knowledge_result": result["messages"][-1].content}
+
+
 @lru_cache(maxsize=8)
 def build_customer_support_agent(language: str):
 
@@ -95,23 +111,24 @@ def customer_support_node(state: AgentState):
     {state["user_message"]}
     """
 
-    result = agent.invoke({
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-        "user_id": state["user_id"],
-    })
+    result = agent.invoke(
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            "user_id": state["user_id"],
+        }
+    )
 
-    return {
-        "customer_support_result":
-            result["messages"][-1].content
-    }
-   
+    return {"customer_support_result": result["messages"][-1].content}
+
+
 def route_agents(state: AgentState):
-    return state["selected_agents"]   
+    return state["selected_agents"]
+
 
 def synthesizer_node(state: AgentState):
 
@@ -147,7 +164,4 @@ def synthesizer_node(state: AgentState):
 
     result = model.invoke(prompt)
 
-    return {
-        "final_response": result.content
-    }
-    
+    return {"final_response": result.content}
