@@ -44,9 +44,9 @@ pythonpath = ["."]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "-q --strict-markers"
+addopts = "-q --strict-markers -m 'not live'"
 markers = [
-    "live: tests that hit real AWS Bedrock / Tavily (deselected by default)",
+    "live: hits real AWS Bedrock and Tavily; run with -m live",
 ]
 
 [tool.ruff]
